@@ -29,6 +29,17 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Check directory structure
+        run: |
+          echo "Current directory:"
+          pwd
+          echo ""
+          echo "Directory contents:"
+          ls -la
+          echo ""
+          echo "package.json exists:"
+          [ -f package.json ] && echo "✓ Found" || echo "✗ Not found"
+
       - name: Install dependencies
         run: npm install
 
