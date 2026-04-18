@@ -16,24 +16,22 @@ concurrency:
 
 jobs:
   build-and-deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Fix nested folder issue
+      - name: Detect correct project folder
+        id: detect
         run: |
-          echo "Before:"
-          ls -la
-          if [ -d Elevore-app-by-Jose-Mario ]; then
-            echo "Entering nested folder..."
-            cd Elevore-app-by-Jose-Mario
+          if [ -f package.json ]; then
+            echo "project_path=." >> $GITHUB_OUTPUT
+          elif [ -f Elevore-app-by-Jose-Mario/package.json ]; then
+            echo "project_path=Elevore-app-by-Jose-Mario" >> $GITHUB_OUTPUT
+          else
+            echo "No package.json found"
+            exit 1
           fi
-          echo "After:"
-          ls -la
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -42,9 +40,11 @@ jobs:
 
       - name: Install dependencies
         run: npm install
+        working-directory: ${{ steps.detect.outputs.project_path }}
 
       - name: Build
         run: npm run build
+        working-directory: ${{ steps.detect.outputs.project_path }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
@@ -52,8 +52,7 @@ jobs:
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: './dist'
+          path: '${{ steps.detect.outputs.project_path }}/dist'
 
       - name: Deploy to GitHub Pages
-        id: deployment
         uses: actions/deploy-pages@v4
